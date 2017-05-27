@@ -1,0 +1,11 @@
+*.py[cod]
+
+*~
+*.swp
+
+config/
+N_facial_expression/
+N_mfc2csv/
+N_text/
+tfrecords/
+
