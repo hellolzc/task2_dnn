@@ -235,7 +235,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--keep_prob',
         type=float,
-        default=0.8,
+        default=1,#0.8,
         help = 'Keep probability for training dropout')
     parser.add_argument(
         '--output_layer',
