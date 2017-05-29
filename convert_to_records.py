@@ -4,7 +4,7 @@
 # Modified: lzc80234@qq.com (liuzhaoci) 20170417
 """Converts data to TFRecords file format with Example protos."""
 from __future__ import absolute_import
-from __future__ import division
+#from __future__ import division
 from __future__ import print_function
 
 import argparse
@@ -33,22 +33,10 @@ def calculate_cmvn(name):
         #utt_id, inputs_path, labels_path = line.strip().split()
         utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
         tf.logging.info("Reading utterance %s" % utt_id)
-        inputs = load_binary_file(inputs_path)
-        inputs = inputs[0:-1:2]  # Downsized sample
-        # concatenate two output
-        labels1 = load_csv_file(labels1_path)
-        labels2 = load_csv_file(labels2_path)
-        if not len(labels1) - len(labels2) < 5:
-            print("dim not compatible: %s:%d - %d"%(utt_id, len(labels1), len(labels2)))
+
+        inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path)
+        if inputs is None:
             continue
-        assert len(inputs) - len(labels1) < 5, \
-            "len not compatible: %s:%d - %d"%(utt_id, len(inputs), len(labels1))
-        # make sure lens are the same
-        min_len = min(len(labels1), len(labels2), len(inputs))
-        labels1 = labels1[0:min_len]
-        labels2 = labels2[0:min_len]
-        labels = np.column_stack((labels1, labels2))
-        inputs = inputs[0:min_len]
 
         if frame_count == 0:    # create numpy array for accumulating
             ex_inputs = np.sum(inputs, axis=0)
@@ -114,6 +102,48 @@ def load_csv_file(file_name):
     my_matrix = np.loadtxt(file_name,delimiter=',',skiprows=0)
     return my_matrix
 
+def load_csv_file_upsample(file_name):
+    '''read data from csv return numpyarray the double the sample rate'''
+    my_matrix = np.loadtxt(file_name,delimiter=',',skiprows=0)
+
+    rows = my_matrix.shape[0] * 2 - 1
+    upsample_matrix = []
+    for row in range(0,rows):
+        if row % 2 == 0:
+             upsample_matrix.append(my_matrix[row/2,:].tolist())
+        else:
+             upsample_temp = (my_matrix[(row-1)/2] + my_matrix[(row+1)/2]) / 2
+             upsample_matrix.append(upsample_temp.tolist())
+    return np.array(upsample_matrix)
+
+def load_a_sample(inputs_path, labels1_path, labels2_path):
+    '''read three file and concatenate two output,
+     make sure lens are the same,
+     return numpy or return None if false
+    '''
+    inputs = load_csv_file(inputs_path).astype(np.float64)
+    #inputs = inputs[0:-1:2]  # Downsized sample
+    # concatenate two output
+    labels1 = load_csv_file(labels1_path).astype(np.float64)
+    labels2 = load_csv_file_upsample(labels2_path).astype(np.float64)
+    '''
+    if not len(labels1) - len(labels2) < 5:
+        print("dim not compatible: %s:%d - %d"%(utt_id, len(labels1), len(labels2)))
+        return None
+    '''
+    if not len(inputs) - len(labels2) < 5:
+        print("len not compatible: %s:%d - %d"%(inputs_path, len(inputs), len(labels2)))
+        return (None, None)
+
+    # make sure lens are the same
+    #min_len = min(len(labels1), len(labels2), len(inputs))
+    min_len = min(len(labels2), len(inputs))
+    inputs = inputs[0:min_len]
+    #labels1 = labels1[0:min_len]
+    labels2 = labels2[0:min_len]
+    labels2 = labels2[:,1:] # delete first column
+    labels = labels2 #np.column_stack((labels1, labels2))
+    return (inputs, labels)
 
 def convert_to(name, apply_cmvn=True):
     """Converts a dataset to tfrecords."""
@@ -127,39 +157,26 @@ def convert_to(name, apply_cmvn=True):
         with tf.python_io.TFRecordWriter(tfrecords_name) as writer:
             tf.logging.info(
                 "Writing utterance %s to %s" % (utt_id, tfrecords_name))
-            inputs = load_binary_file(inputs_path).astype(np.float64)
-            inputs = inputs[0:-1:2]  # Downsized sample
+
             #labels = read_binary_file(labels_path).astype(np.float64)
             # concatenate two output
-            labels1 = load_csv_file(labels1_path)
-            labels2 = load_csv_file(labels2_path)
-            if not len(labels1) - len(labels2) < 5:
-                print("dim not compatible: %s:%d - %d"%(utt_id, len(labels1), len(labels2)))
-                continue
-            assert len(inputs) - len(labels1) < 5, \
-                "len not compatible: %s:%d - %d"%(utt_id, len(inputs), len(labels1))
-            # make sure lens are the same
-            min_len = min(len(labels1), len(labels2), len(inputs))
-            labels1 = labels1[0:min_len]
-            labels2 = labels2[0:min_len]
-            labels = np.column_stack((labels1, labels2))
-            inputs = inputs[0:min_len]
-
-
-            if apply_cmvn:
-                #print(cmvn["stddev_inputs"].dtype)
-                minivalue_in = np.ones( cmvn["stddev_inputs"].shape,
-                                    dtype=np.float64) * 1e-7
-                minivalue_lab = np.ones( cmvn["stddev_labels"].shape,
-                                    dtype=np.float64) * 1e-7
-                #print(cmvn["stddev_inputs"])
-                inputs = (inputs - cmvn["mean_inputs"]) /(
-                    cmvn["stddev_inputs"]+minivalue_in)
-                labels = (labels - cmvn["mean_labels"]) /(
-                    cmvn["stddev_labels"]+minivalue_lab)
-            ex = make_sequence_example(inputs, labels)
-            writer.write(ex.SerializeToString())
-
+            inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path)
+            if inputs is not None:
+                if apply_cmvn:
+                    #print(cmvn["stddev_inputs"].dtype)
+                    minivalue_in = np.ones( cmvn["stddev_inputs"].shape,
+                                        dtype=np.float64) * 1e-7
+                    minivalue_lab = np.ones( cmvn["stddev_labels"].shape,
+                                        dtype=np.float64) * 1e-7
+                    #print(cmvn["stddev_inputs"])
+                    inputs = (inputs - cmvn["mean_inputs"]) /(
+                        cmvn["stddev_inputs"]+minivalue_in)
+                    labels = (labels - cmvn["mean_labels"]) /(
+                        cmvn["stddev_labels"]+minivalue_lab)
+                ex = make_sequence_example(inputs, labels)
+                writer.write(ex.SerializeToString())
+        if os.path.getsize(tfrecords_name) < 10: #filesize < 10byte
+            os.remove(tfrecords_name)
     config_file.close()
 
 

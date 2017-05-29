@@ -73,7 +73,7 @@ def train(sess, coord, dnn, batch_size, batch_x, batch_y, num_threads, training,
             total_costs = total_costs + cost
             total_frames = total_frames + batch_size
 
-            if (total_frames/batch_size) % 100 == 0:
+            if (total_frames/batch_size) % 50 == 0:
                 #print '>>>>costs at the ', float(total_frames) * 10 /1000 / 3600, \
                 print '>>>>costs at the ', total_frames, \
                         ' is ', total_costs/total_frames, '<<<<\n'
@@ -159,12 +159,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--input_dim',
-        default = 501,#257
+        default = 49,#257
         type=int,
         help = 'Input feature dim with out context windows len.')
     parser.add_argument(
         '--output_dim',
-        default = 349,#257
+        default = 309,#257
         type=int,
         help = 'Output feature dim with out context windows len.')
     parser.add_argument(
@@ -179,12 +179,12 @@ if __name__ == "__main__":
         help = 'Right context lengh for slicing feature')
     parser.add_argument(
         '--num_layers',
-        default=3,
+        default=2,
         type=int,
         help = 'Number of hidden layers.')
     parser.add_argument(
         '--num_units',
-        default=512,
+        default=128,
         type=int,
         help='Number of nuros in every layer')
     parser.add_argument(
@@ -244,7 +244,7 @@ if __name__ == "__main__":
         help= 'The output layer type, softmox or linear')
     parser.add_argument(
         '--active_func',
-        default=tf.nn.relu,
+        default=tf.nn.sigmoid,
         type=str,
         help = 'The active function of hidden layers')
     FLAGS, unparsed = parser.parse_known_args()

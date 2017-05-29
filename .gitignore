@@ -4,8 +4,9 @@
 *.swp
 
 config/
-N_facial_expression/
-N_mfc2csv/
-N_text/
+data/N_facial_expression/
+data/N_mfc2csv/
+data/N_text_bin/
 tfrecords/
+exp/
 

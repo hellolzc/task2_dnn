@@ -6,22 +6,30 @@ import os
 
 def main(configFileName,start_index,end_index):
     #configFileName = FLAGS.config_dir_name
-    cmp_files_dir = "./N_text/"
-    lab_files_dir = "./N_mfc2csv/"
-    lab2_files_dir = "./N_facial_expression/"
+    input_files_dir = "data/onehot_feature_merged/"
+    lab_files_dir = "data/N_wav_mfc2csv/"
+    lab2_files_dir = "data/N_facial_expression/"
     f = open(configFileName,'w')
     print("generate file list...\n")
     print("file name:%s\n"%(configFileName))
 
-    list = os.listdir(cmp_files_dir)
+    list = os.listdir(input_files_dir)
     list = sorted(list)
     print("files count:%d\n"%len(list))
     print("%d-%d\n"%(start_index,end_index))
     for i in range(start_index,end_index):
         curfile = list[i]
         uuid = curfile[8:12]
+        lab_file_path = '%sN%s_wav.csv'%(lab_files_dir, uuid)
+        lab2_file_path = '%sN%s_expression.csv'%(lab2_files_dir, uuid)
+        if not os.path.isfile(lab_file_path):
+            print "file %s not exits!"%lab_file_path
+            continue
+        if not os.path.isfile(lab2_file_path):
+            print "file %s not exits!"%lab2_file_path
+            continue
         #[uuid, ext_type_name] = os.path.splitext(curfile)
-        str = "%s %sarctic_b%s.lab %sN%s_wav.csv %sN%s_expression.csv\n" % (uuid, cmp_files_dir, uuid, lab_files_dir, uuid, lab2_files_dir, uuid)
+        str = "%s %s %s %s\n" % (uuid, input_files_dir+curfile, lab_file_path, lab2_file_path)
         f.write(str)
     f.close()
 
@@ -43,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--end_index',
         type=str,
-        default=1000,
+        default=100,
         help='end_index'
     )
     FLAGS, unparsed = parser.parse_known_args()
