@@ -10,3 +10,6 @@ data/N_text_bin/
 tfrecords/
 exp/
 
+*.csv
+*.tfrecords
+*.tar.gz
