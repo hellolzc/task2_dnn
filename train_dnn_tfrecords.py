@@ -74,8 +74,7 @@ def train(sess, coord, dnn, batch_size, batch_x, batch_y, num_threads, training,
             total_frames = total_frames + batch_size
 
             if (total_frames/batch_size) % 50 == 0:
-                #print '>>>>costs at the ', float(total_frames) * 10 /1000 / 3600, \
-                print '>>>>costs at the ', total_frames, \
+                print '>>>>costs at the ', float(total_frames) * 5 /1000 / 3600, \
                         ' is ', total_costs/total_frames, '<<<<\n'
     except tf.errors.OutOfRangeError:
         print "Done"
@@ -179,12 +178,12 @@ if __name__ == "__main__":
         help = 'Right context lengh for slicing feature')
     parser.add_argument(
         '--num_layers',
-        default=2,
+        default=2,#3
         type=int,
         help = 'Number of hidden layers.')
     parser.add_argument(
         '--num_units',
-        default=128,
+        default=128,#1024
         type=int,
         help='Number of nuros in every layer')
     parser.add_argument(
