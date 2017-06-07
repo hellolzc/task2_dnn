@@ -15,12 +15,68 @@ import multiprocessing
 
 import numpy as np
 import tensorflow as tf
+from sklearn.decomposition import PCA
 #print(sys.path[0])
 
 #sys.path.append(os.path.dirname(sys.path[0]))
 from tfrecords_io import make_sequence_example
 
 tf.logging.set_verbosity(tf.logging.INFO)
+
+pca_global = PCA(n_components=30)
+is_fited = False
+
+def fit_pca(data):
+    newData = pca_global.fit_transform(data)
+    is_fited = True
+    print("set n_components:", newData.shape[1])
+    print("variance remained:", sum(pca_global.explained_variance_ratio_))
+
+    pca_components = pca_global.components_
+    pca_mean = pca_global.mean_
+    pca_file_name = os.path.join(FLAGS.output_dir, "train_pca.npz")
+    np.savez(pca_file_name,
+             pca_components=pca_components,
+             pca_mean=pca_mean)
+    tf.logging.info("Wrote to %s" % pca_file_name)
+    return newData
+
+def do_pca(data):
+    if is_fited:
+        return pca_global.transform(data)
+
+    pca = np.load(os.path.join(FLAGS.output_dir, "train_pca.npz"))
+    data = data - pca['pca_mean']
+    data_transformed = np.dot(data, pca['pca_components'].T)
+    return data_transformed
+
+def verse_pca(data):
+    pca = np.load(os.path.join(FLAGS.output_dir, "train_pca.npz"))
+    original_data = np.dot(data, pca['pca_components']) + pca['pca_mean']
+    return original_data
+
+def apply_pca(name):
+    """apply pca."""
+    tf.logging.info("Apply dimensionality reduction to %s" % name)
+    config_filename = open(os.path.join(FLAGS.config_dir, name + '.list'))
+
+    frame_count = 0
+    for line in config_filename:
+        #utt_id, inputs_path, labels_path = line.strip().split()
+        utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
+        tf.logging.info("Reading utterance %s" % utt_id)
+
+        inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path, do_pca_flag=False)
+        if inputs is None:
+            continue
+        if frame_count == 0:    # create numpy array for accumulating
+            big_matrix = labels
+        else:
+            big_matrix = np.row_stack((big_matrix, labels))
+        frame_count += len(inputs)
+    #fit PCA
+    fit_pca(big_matrix)
+    config_filename.close()
 
 
 def calculate_cmvn(name):
@@ -43,11 +99,13 @@ def calculate_cmvn(name):
             ex2_inputs = np.sum(inputs**2, axis=0)
             ex_labels = np.sum(labels, axis=0)
             ex2_labels = np.sum(labels**2, axis=0)
+
         else:
             ex_inputs += np.sum(inputs, axis=0)
             ex2_inputs += np.sum(inputs**2, axis=0)
             ex_labels += np.sum(labels, axis=0)
             ex2_labels += np.sum(labels**2, axis=0)
+
         frame_count += len(inputs)
 
     mean_inputs = ex_inputs / frame_count
@@ -116,7 +174,7 @@ def load_csv_file_upsample(file_name):
              upsample_matrix.append(upsample_temp.tolist())
     return np.array(upsample_matrix)
 
-def load_a_sample(inputs_path, labels1_path, labels2_path):
+def load_a_sample(inputs_path, labels1_path, labels2_path, do_pca_flag = True):
     '''read three file and concatenate two output,
      make sure lens are the same,
      return numpy or return None if false
@@ -143,6 +201,9 @@ def load_a_sample(inputs_path, labels1_path, labels2_path):
     labels2 = labels2[0:min_len]
     labels2 = labels2[:,1:] # delete first column
     labels = labels2 #np.column_stack((labels1, labels2))
+    # DO PCA
+    if do_pca_flag:
+        labels = do_pca(labels)
     return (inputs, labels)
 
 def convert_to(name, apply_cmvn=True):
@@ -182,6 +243,7 @@ def convert_to(name, apply_cmvn=True):
 
 def main(unused_argv):
     # Convert to Examples and write the result to TFRecords.
+    apply_pca("train")
     calculate_cmvn("train")    # use training data to calculate mean and var
 
     convert_to("train", apply_cmvn=True)

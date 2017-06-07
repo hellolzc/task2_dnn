@@ -101,7 +101,7 @@ def main(_):
     num_units = FLAGS.num_units
     output_layer = FLAGS.output_layer
     batch_size = FLAGS.batch_size
-    active_func = tf.nn.relu
+    active_func = FLAGS.active_func#tf.nn.relu
     num_threads = FLAGS.num_threads
     train_list, len_train = process_file_list(FLAGS.train_list)
     dev_list, len_dev = process_file_list(FLAGS.dev_list)
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         help = 'Input feature dim with out context windows len.')
     parser.add_argument(
         '--output_dim',
-        default = 309,#257
+        default = 30,#257
         type=int,
         help = 'Output feature dim with out context windows len.')
     parser.add_argument(
