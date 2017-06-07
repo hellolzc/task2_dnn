@@ -73,7 +73,8 @@ def train(sess, coord, dnn, batch_size, batch_x, batch_y, num_threads, training,
             total_costs = total_costs + cost
             total_frames = total_frames + batch_size
 
-            if (total_frames/batch_size) % 50 == 0:
+            if (total_frames/batch_size) % 50 == 0 or \
+                     ((total_frames/batch_size) < 50 and (total_frames/batch_size) % 2 == 0):
                 print '>>>>costs at the ', float(total_frames) * 5 /1000 / 3600, \
                         ' is ', total_costs/total_frames, '<<<<\n'
     except tf.errors.OutOfRangeError:
@@ -203,7 +204,7 @@ if __name__ == "__main__":
         help='Number of training epoches')
     parser.add_argument(
         '--batch_size',
-        default=10,#256
+        default=64,#256
         type=int,
         help='Batch size')
     parser.add_argument(
