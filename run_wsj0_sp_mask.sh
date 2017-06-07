@@ -87,33 +87,33 @@ if [ $stage -le 3 ]; then
   load_model=`cat $save_dir/best.mdl`
   data_dir=`pwd`/data/wsj0_separation/test_pit/
   test_list=config/${mode}_tf.lst
-  python   test_dnn_wsj0_sp_pit.py --load_model=$load_model --test_list=$test_list --data_dir=$data_dir \
-  --out_left_context=$out_left_context --out_right_context=$out_right_context \
-    --in_left_context=$in_left_context --in_right_context=$in_right_context|| exit 1
+  python   test_dnn_tfrecords.py --load_model=$load_model --test_list=$test_list --data_dir=$data_dir \
+  \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
+    --left_context=$in_left_context --right_context=$in_right_context|| exit 1
 
 fi
 
-if [ $stage -le 4 ]; then
-  . ./path.sh 
-  data_dir=`pwd`/data/wsj0_separation/test_pit/  #same as the stage 3
-  scp_list=config/wsj0_sp_test_scp.lst
-  ori_wav_path=/home/disk1/snsun/Workspace/tensorflow/kaldi/data/wsj0_separation/ori_wav/wsj0_mixed_test/
-  rec_wav_path=data/wsj0_separation/rec_wav_test/
-  mkdir -p $rec_wav_path
-  find $data_dir -iname "*.scp" > $scp_list
-  for line in `cat $scp_list`; do
+# if [ $stage -le 4 ]; then
+#   . ./path.sh 
+#   data_dir=`pwd`/data/wsj0_separation/test_pit/  #same as the stage 3
+#   scp_list=config/wsj0_sp_test_scp.lst
+#   ori_wav_path=/home/disk1/snsun/Workspace/tensorflow/kaldi/data/wsj0_separation/ori_wav/wsj0_mixed_test/
+#   rec_wav_path=data/wsj0_separation/rec_wav_test/
+#   mkdir -p $rec_wav_path
+#   find $data_dir -iname "*.scp" > $scp_list
+#   for line in `cat $scp_list`; do
 
-    wavname=`basename -s .scp $line`
-    w=`echo $wavname | awk -F '_' 'BEGIN{OFS="_"}{print $1,$2}'` 
-    w=${w}.wav
-    if [ $apply_cmvn -eq 1 ];then
-      apply-cmvn --norm-vars=true --reverse=true $inputs_cmvn scp:$line  ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
-    else
-      copy-feats scp:$line ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
-    fi
-    python   ./tools/reconstruct_spectrogram.py tmp_enhan.scp ${ori_wav_path}/$w ${rec_wav_path}/${wavname} || exit 1
-  done
+#     wavname=`basename -s .scp $line`
+#     w=`echo $wavname | awk -F '_' 'BEGIN{OFS="_"}{print $1,$2}'` 
+#     w=${w}.wav
+#     if [ $apply_cmvn -eq 1 ];then
+#       apply-cmvn --norm-vars=true --reverse=true $inputs_cmvn scp:$line  ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
+#     else
+#       copy-feats scp:$line ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
+#     fi
+#     python   ./tools/reconstruct_spectrogram.py tmp_enhan.scp ${ori_wav_path}/$w ${rec_wav_path}/${wavname} || exit 1
+#   done
 
-rm tmp_enhan.ark
+# rm tmp_enhan.ark
 echo "Done OK!"
 fi
