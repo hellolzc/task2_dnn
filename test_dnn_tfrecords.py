@@ -44,18 +44,37 @@ def splice_feats(feats, l, r):
 
 def write_output_to_csv(feature, uttid, data_dir):
     output_filename = data_dir + '/' + uttid + '_out' + '.csv'
-    length = len(feature)
-    tag = np.arange(0, length, 1)
-    feature = np.column_stack([tag, feature])
     # output = open(output_filename, 'w')
-    np.savetxt(output_filename, feature, delimiter=',')
+    np.savetxt(output_filename, feature, delimiter=',', fmt='%.6f')
 
 def verse_pca(data):
     pca = np.load(os.path.join('./tfrecords', "train_pca.npz"))
     original_data = np.dot(data, pca['pca_components']) + pca['pca_mean']
     return original_data
 
-def test(sess, coord, dnn, sfeats,file_list,data_dir):
+def reconstruct_expression(expression_30d):
+    """30d->309d->310d"""
+    # mutiply var and add mean
+    cmvn = np.load(os.path.join('./tfrecords', "train_cmvn.npz"))
+    #minivalue_in = np.ones(cmvn["stddev_inputs"].shape,
+    #                       dtype=np.float64) * 1e-7
+    minivalue_lab = np.ones(cmvn["stddev_labels"].shape,
+                            dtype=np.float64) * 1e-7
+    #print(cmvn["stddev_inputs"])
+    #inputs = (inputs - cmvn["mean_inputs"]) /(
+    #    cmvn["stddev_inputs"]+minivalue_in)
+    expression_30d = expression_30d * (cmvn["stddev_labels"]+minivalue_lab) \
+             + cmvn["mean_labels"]
+    # verse PCA
+    output_309d = verse_pca(expression_30d)
+
+    # add line number
+    length = len(output_309d)
+    tag = np.arange(0, length, 1)
+    output_310d = np.column_stack([tag, output_309d])
+    return output_310d
+
+def test(sess, coord, dnn, sfeats, file_list, data_dir):
 
     count = 0
     try:
@@ -68,8 +87,8 @@ def test(sess, coord, dnn, sfeats,file_list,data_dir):
 
             #kaldi_writer = kio.ArkWriter(data_dir+'/' + uttid + '.scp')
             #kaldi_writer.write_next_utt(data_dir+'/' + uttid + '.ark', uttid, output)
-            output_209 = verse_pca(output)
-            write_output_to_csv(output_209, uttid, data_dir)
+            output = reconstruct_expression(output)
+            write_output_to_csv(output, uttid, data_dir)
             count += 1
             if count%5 == 0:
                 print "Processing ", count, "utterances \n"
