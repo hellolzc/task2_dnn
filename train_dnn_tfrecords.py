@@ -74,8 +74,8 @@ def train(sess, coord, dnn, batch_size, batch_x, batch_y, num_threads, training,
             total_frames = total_frames + batch_size
 
             if (total_frames/batch_size) % 50 == 0 or \
-                     ((total_frames/batch_size) < 50 and (total_frames/batch_size) % 2 == 0):
-                print '>>>>costs at the ', float(total_frames) * 5 /1000 / 3600, \
+                     ((total_frames/batch_size) < 50 and (total_frames/batch_size) % 5 == 0):
+                print '>>>>costs at the %5f min'%( float(total_frames) * 5 /1000 / 60 ), \
                         ' is ', total_costs/total_frames, '<<<<\n'
     except tf.errors.OutOfRangeError:
         print "Done"

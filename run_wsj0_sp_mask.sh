@@ -41,7 +41,7 @@ fi
 # fi
 if [ $stage -le 2 ]; then
   echo "state=$stage, begin training the model"
-  learning_rate=0.001
+  learning_rate=0.0001
   halving_factor=0.5
   training_impr=0.01
   load_model=
@@ -116,4 +116,4 @@ fi
 
 # rm tmp_enhan.ark
 echo "Done OK!"
-fi
+#fi
