@@ -4,11 +4,10 @@
 *.swp
 
 config/
-data/N_facial_expression/
-data/N_mfc2csv/
-data/N_text_bin/
+data/
 tfrecords/
 exp/
+test_output/
 
 *.csv
 *.tfrecords

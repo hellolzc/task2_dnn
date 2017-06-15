@@ -1,8 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2016 ASLP@NPU.  All rights reserved.
-#
 # Author: npuichigo@gmail.com (zhangyuchao)
 # Modified: lzc80234@qq.com (liuzhaoci) 20170417
-"""Converts data to TFRecords file format with Example protos."""
+"""Converts data to TFRecords file format with Example protos.
+三个文件放在config目录下，名子为train.list，val.list, test.list
+每行为uuid input_filename label_filename
+转成的tfrecords放output_dir下
+建议三个集合只用list区分，放在同一个文件夹下
+"""
 from __future__ import absolute_import
 #from __future__ import division
 from __future__ import print_function
