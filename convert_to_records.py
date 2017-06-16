@@ -68,11 +68,11 @@ def apply_pca(name):
 
     frame_count = 0
     for line in config_filename:
-        #utt_id, inputs_path, labels_path = line.strip().split()
-        utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
+        utt_id, inputs_path, labels_path = line.strip().split()
+        #utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
         tf.logging.info("Reading utterance %s" % utt_id)
 
-        inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path, do_pca_flag=False)
+        inputs, labels = load_a_sample(inputs_path, labels_path, do_pca_flag=False)
         if inputs is None:
             continue
         if frame_count == 0:    # create numpy array for accumulating
@@ -81,6 +81,7 @@ def apply_pca(name):
             big_matrix = np.row_stack((big_matrix, labels))
         frame_count += len(inputs)
     #fit PCA
+    #np.savetxt('./debug_bigmatrix.txt', big_matrix, delimiter=',', fmt='%.6f')
     fit_pca(big_matrix)
     config_filename.close()
 
@@ -92,11 +93,11 @@ def calculate_cmvn(name):
 
     frame_count = 0
     for line in config_filename:
-        #utt_id, inputs_path, labels_path = line.strip().split()
-        utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
+        utt_id, inputs_path, labels_path = line.strip().split()
+        #utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
         tf.logging.info("Reading utterance %s" % utt_id)
 
-        inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path)
+        inputs, labels = load_a_sample(inputs_path, labels_path)
         if inputs is None:
             continue
 
@@ -180,16 +181,20 @@ def load_csv_file_upsample(file_name):
              upsample_matrix.append(upsample_temp.tolist())
     return np.array(upsample_matrix)
 
-def load_a_sample(inputs_path, labels1_path, labels2_path, do_pca_flag = True):
+def load_a_sample(inputs_path, labels2_path, do_pca_flag = True):
     '''read three file and concatenate two output,
      make sure lens are the same,
      return numpy or return None if false
+     inputs_path: text features
+     labels1: wav mfcc
+     labels2: expression data
     '''
     inputs = load_csv_file(inputs_path).astype(np.float64)
     #inputs = inputs[0:-1:2]  # Downsized sample
     # concatenate two output
-    labels1 = load_csv_file(labels1_path).astype(np.float64)
-    labels2 = load_csv_file_upsample(labels2_path).astype(np.float64)
+    #labels1 = load_csv_file(labels1_path).astype(np.float64)
+    #labels2 = load_csv_file_upsample(labels2_path).astype(np.float64)
+    labels2 = load_csv_file(labels2_path).astype(np.float64)
     '''
     if not len(labels1) - len(labels2) < 5:
         print("dim not compatible: %s:%d - %d"%(utt_id, len(labels1), len(labels2)))
@@ -205,9 +210,10 @@ def load_a_sample(inputs_path, labels1_path, labels2_path, do_pca_flag = True):
     inputs = inputs[0:min_len]
     #labels1 = labels1[0:min_len]
     labels2 = labels2[0:min_len]
-    labels2 = labels2[:,1:] # delete first column
+    labels2 = labels2[:, 1:] # delete first column
     labels = labels2 #np.column_stack((labels1, labels2))
     # DO PCA
+    # np.savetxt('./debug_a_sample.txt', labels, delimiter=',', fmt='%.6f')
     if do_pca_flag:
         labels = do_pca(labels)
     return (inputs, labels)
@@ -217,8 +223,8 @@ def convert_to(name, apply_cmvn=True):
     cmvn = np.load(os.path.join(FLAGS.output_dir, "train_cmvn.npz"))
     config_file = open(os.path.join(FLAGS.config_dir, name + ".list"))
     for line in config_file:
-        #utt_id, inputs_path, labels_path = line.strip().split()
-        utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
+        utt_id, inputs_path, labels_path = line.strip().split()
+        #utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
         tfrecords_name = os.path.join(FLAGS.output_dir, name,
                                       utt_id + ".tfrecords")
         with tf.python_io.TFRecordWriter(tfrecords_name) as writer:
@@ -227,7 +233,7 @@ def convert_to(name, apply_cmvn=True):
 
             #labels = read_binary_file(labels_path).astype(np.float64)
             # concatenate two output
-            inputs, labels = load_a_sample(inputs_path, labels1_path, labels2_path)
+            inputs, labels = load_a_sample(inputs_path, labels_path)
             if inputs is not None:
                 if apply_cmvn:
                     #print(cmvn["stddev_inputs"].dtype)
@@ -253,7 +259,7 @@ def main(unused_argv):
     calculate_cmvn("train")    # use training data to calculate mean and var
 
     convert_to("train", apply_cmvn=True)
-    convert_to("val", apply_cmvn=True)#val mean yanzhengji
+    convert_to("val", apply_cmvn=True)#val mean validation
     convert_to("test", apply_cmvn=True)
 
 if __name__ == '__main__':

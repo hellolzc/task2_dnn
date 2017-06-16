@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Author:  lzc80234@qq.com (liuzhaoci) 2017/5/27
 '''train use dnn'''
 import numpy as np
@@ -123,6 +125,7 @@ def main(_):
     if load_model != '':
         saver.restore(dnn.sess, load_model)
     # learning rate
+
     dnn.assign_lr(FLAGS.learning_rate)
 
     coord = tf.train.Coordinator()
@@ -161,7 +164,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--input_dim',
-        default = 49,#257
+        default = 39,#257
         type=int,
         help = 'Input feature dim with out context windows len.')
     parser.add_argument(
@@ -191,12 +194,12 @@ if __name__ == "__main__":
         help='Number of nuros in every layer')
     parser.add_argument(
         '--train_list',
-        default='tfrecords/train.list',#'config/train_tf.lst',
+        default='tfrecords/train_tf.list',#'config/train_tf.lst',
         type=str,
         help='Training feature and label tf list.')
     parser.add_argument(
         '--dev_list',
-        default='tfrecords/val.list',#'config/dev_tf.lst',
+        default='tfrecords/val_tf.list',#'config/dev_tf.lst',
         type=str,
         help='Developement feature and label tf. list')
     parser.add_argument(

@@ -8,6 +8,7 @@ data/
 tfrecords/
 exp/
 test_output/
+exp_wsj0_sp_pit/
 
 *.csv
 *.tfrecords

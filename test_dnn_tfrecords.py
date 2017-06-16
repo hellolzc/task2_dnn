@@ -138,7 +138,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--input_dim',
-        default = 49,#257,
+        default = 39,#257,
         type=int,
         help = 'Input feature dim with out context windows len.')
     parser.add_argument(
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         help='Number of nuros in every layer')
     parser.add_argument(
         '--test_list',
-        default='tfrecords/test.list',
+        default='tfrecords/test_tf.list',
         type=str,
         help='Test feature and label tf list.')
     parser.add_argument(
