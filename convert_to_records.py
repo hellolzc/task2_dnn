@@ -86,7 +86,7 @@ def apply_pca(name):
     config_filename.close()
 
 
-def calculate_cmvn(name):
+def calculate_cmvn(name, apply_pca=False):
     """Calculate mean and var."""
     tf.logging.info("Calculating mean and var of %s" % name)
     config_filename = open(os.path.join(FLAGS.config_dir, name + '.list'))
@@ -97,7 +97,7 @@ def calculate_cmvn(name):
         #utt_id, inputs_path, labels1_path, labels2_path = line.strip().split()
         tf.logging.info("Reading utterance %s" % utt_id)
 
-        inputs, labels = load_a_sample(inputs_path, labels_path)
+        inputs, labels = load_a_sample(inputs_path, labels_path, do_pca_flag=apply_pca)
         if inputs is None:
             continue
 
@@ -181,7 +181,7 @@ def load_csv_file_upsample(file_name):
              upsample_matrix.append(upsample_temp.tolist())
     return np.array(upsample_matrix)
 
-def load_a_sample(inputs_path, labels2_path, do_pca_flag = True):
+def load_a_sample(inputs_path, labels2_path, do_pca_flag=False):
     '''read three file and concatenate two output,
      make sure lens are the same,
      return numpy or return None if false
@@ -218,7 +218,7 @@ def load_a_sample(inputs_path, labels2_path, do_pca_flag = True):
         labels = do_pca(labels)
     return (inputs, labels)
 
-def convert_to(name, apply_cmvn=True):
+def convert_to(name, apply_cmvn=True,  apply_pca=False):
     """Converts a dataset to tfrecords."""
     cmvn = np.load(os.path.join(FLAGS.output_dir, "train_cmvn.npz"))
     config_file = open(os.path.join(FLAGS.config_dir, name + ".list"))
@@ -233,7 +233,7 @@ def convert_to(name, apply_cmvn=True):
 
             #labels = read_binary_file(labels_path).astype(np.float64)
             # concatenate two output
-            inputs, labels = load_a_sample(inputs_path, labels_path)
+            inputs, labels = load_a_sample(inputs_path, labels_path, do_pca_flag=apply_pca)
             if inputs is not None:
                 if apply_cmvn:
                     #print(cmvn["stddev_inputs"].dtype)
@@ -256,11 +256,11 @@ def convert_to(name, apply_cmvn=True):
 def main(unused_argv):
     # Convert to Examples and write the result to TFRecords.
     apply_pca("train")
-    calculate_cmvn("train")    # use training data to calculate mean and var
+    calculate_cmvn("train", apply_pca=True)    # use training data to calculate mean and var
 
-    convert_to("train", apply_cmvn=True)
-    convert_to("val", apply_cmvn=True)#val mean validation
-    convert_to("test", apply_cmvn=True)
+    convert_to("train", apply_cmvn=True, apply_pca=True)
+    convert_to("val", apply_cmvn=True, apply_pca=True)#val mean validation
+    convert_to("test", apply_cmvn=True, apply_pca=True)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

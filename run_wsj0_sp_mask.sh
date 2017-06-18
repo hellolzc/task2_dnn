@@ -11,6 +11,7 @@ in_left_context=2
 in_right_context=2
 keep_prob=1
 apply_cmvn=1
+output_dim=30
 # inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
 # labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
 save_dir=exp_wsj0_sp_pit
@@ -57,7 +58,7 @@ if [ $stage -le 2 ]; then
     fi
     echo -e "\nLoad: $load_model"
     python -u train_dnn_tfrecords.py --num_iter=$i --learning_rate=$learning_rate --load_model=$load_model \
-    --num_layers=$num_layers --num_units=$num_units --save_dir=$save_dir \
+    --num_layers=$num_layers --num_units=$num_units --save_dir=$save_dir --output_dim=$output_dim \
     \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
     --left_context=$in_left_context --right_context=$in_right_context|| exit 1
     cur_cv_costs=`tail -n 1 $save_dir/log.txt | cut -d ' ' -f 2` 
@@ -90,7 +91,7 @@ if [ $stage -le 3 ]; then
   data_dir=`pwd`/test_output/ #`pwd`/data/wsj0_separation/test_pit/
   test_list=`pwd`/tfrecords/test_tf.list #config/${mode}_tf.lst
   python   test_dnn_tfrecords.py --load_model=$load_model --test_list=$test_list --data_dir=$data_dir \
-    --num_layers=$num_layers --num_units=$num_units \
+    --num_layers=$num_layers --num_units=$num_units  --output_dim=$output_dim \
     \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
     --left_context=$in_left_context --right_context=$in_right_context|| exit 1
 
