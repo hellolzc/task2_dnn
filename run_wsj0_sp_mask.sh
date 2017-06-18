@@ -3,7 +3,7 @@
 stage=2
 config_dir=config/ # store list 'utt input1.ark:234 output1.ark:122
 output_dir=data/tfrecords
-num_layers=2
+num_layers=4
 num_units=256
 out_left_context=0
 out_right_context=0
@@ -11,8 +11,8 @@ in_left_context=2
 in_right_context=2
 keep_prob=1
 apply_cmvn=1
- inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
-  labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
+# inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
+# labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
 save_dir=exp_wsj0_sp_pit
 if [ ! -d $config_dir ]; then
   mkdir $config_dir
@@ -55,7 +55,7 @@ if [ $stage -le 2 ]; then
     if [ $i -gt 1 ]; then
       load_model=`cat $save_dir/best.mdl | cut -d ' ' -f 1`
     fi
-
+    echo -e "\nLoad: $load_model"
     python -u train_dnn_tfrecords.py --num_iter=$i --learning_rate=$learning_rate --load_model=$load_model \
     --num_layers=$num_layers --num_units=$num_units --save_dir=$save_dir \
     \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
@@ -71,6 +71,7 @@ if [ $stage -le 2 ]; then
     fi
     if [ $reject -gt 0 ]; then
       learning_rate=$(echo " $learning_rate * $halving_factor  "|bc -l)
+      echo -e "change learning rate to $learning_rate\n"
     fi
     rel_impr=$(bc <<< "scale=10; ($pre_cv_costs-$cur_cv_costs)/$pre_cv_costs")
    # if [ $(echo "$rel_impr < $training_impr" | bc) = 1 ];then
@@ -82,13 +83,15 @@ if [ $stage -le 2 ]; then
 fi
 
 echo 'Training Done'
-mode=wsj0_sp_test
+
+#mode=wsj0_sp_test
 if [ $stage -le 3 ]; then
   load_model=`cat $save_dir/best.mdl`
-  data_dir=`pwd`/data/wsj0_separation/test_pit/
-  test_list=config/${mode}_tf.lst
+  data_dir=`pwd`/test_output/ #`pwd`/data/wsj0_separation/test_pit/
+  test_list=`pwd`/tfrecords/test_tf.list #config/${mode}_tf.lst
   python   test_dnn_tfrecords.py --load_model=$load_model --test_list=$test_list --data_dir=$data_dir \
-  \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
+    --num_layers=$num_layers --num_units=$num_units \
+    \ #--out_left_context=$out_left_context --out_right_context=$out_right_context \
     --left_context=$in_left_context --right_context=$in_right_context|| exit 1
 
 fi

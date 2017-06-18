@@ -75,9 +75,9 @@ def train(sess, coord, dnn, batch_size, batch_x, batch_y, num_threads, training,
             total_costs = total_costs + cost
             total_frames = total_frames + batch_size
 
-            if (total_frames/batch_size) < 50 and (total_frames/batch_size) % 5 == 0:
-                print '!>>>>costs at the %5f min'%(float(total_frames) * 5/1000/60), \
-                        ' is ', total_costs/total_frames, '<<<<\n'
+            # if (total_frames/batch_size) < 50 and (total_frames/batch_size) % 5 == 0:
+            #     print '!>>>>costs at the %5f min'%(float(total_frames) * 5/1000/60), \
+            #             ' is ', total_costs/total_frames, '<<<<\n'
             if (total_frames/batch_size) % 50 == 0:
                 print '>>>>costs at the %5f min'%(float(total_frames) * 5/1000/60), \
                         ' is ', total_costs/total_frames, '<<<<\n'
@@ -184,12 +184,12 @@ if __name__ == "__main__":
         help = 'Right context lengh for slicing feature')
     parser.add_argument(
         '--num_layers',
-        default=2,#3
+        default=3,#3
         type=int,
         help = 'Number of hidden layers.')
     parser.add_argument(
         '--num_units',
-        default=128,#1024
+        default=256,#1024
         type=int,
         help='Number of nuros in every layer')
     parser.add_argument(
