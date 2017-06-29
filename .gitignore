@@ -3,6 +3,7 @@
 *~
 *.swp
 
+.vscode/
 config/
 data/
 tfrecords/
@@ -13,3 +14,4 @@ exp_wsj0_sp_pit/
 *.csv
 *.tfrecords
 *.tar.gz
+*.avi
