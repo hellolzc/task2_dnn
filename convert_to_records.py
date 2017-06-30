@@ -255,12 +255,14 @@ def convert_to(name, apply_cmvn=True,  apply_pca=False):
 
 def main(unused_argv):
     # Convert to Examples and write the result to TFRecords.
-    apply_pca("train")
-    calculate_cmvn("train", apply_pca=True)    # use training data to calculate mean and var
+    DO_PCA = False
+    if DO_PCA:
+        apply_pca("train")
+    calculate_cmvn("train", apply_pca=DO_PCA)    # use training data to calculate mean and var
 
-    convert_to("train", apply_cmvn=True, apply_pca=True)
-    convert_to("val", apply_cmvn=True, apply_pca=True)#val mean validation
-    convert_to("test", apply_cmvn=True, apply_pca=True)
+    convert_to("train", apply_cmvn=True, apply_pca=DO_PCA)
+    convert_to("val", apply_cmvn=True, apply_pca=DO_PCA)#val mean validation
+    convert_to("test", apply_cmvn=True, apply_pca=DO_PCA)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

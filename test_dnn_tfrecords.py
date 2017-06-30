@@ -52,7 +52,7 @@ def verse_pca(data):
     original_data = np.dot(data, pca['pca_components']) + pca['pca_mean']
     return original_data
 
-def reconstruct_expression(expression_30d):
+def reconstruct_expression(expression_30d, do_pca_flag=False):
     """30d->309d->310d"""
     # mutiply var and add mean
     cmvn = np.load(os.path.join('./tfrecords', "train_cmvn.npz"))
@@ -66,7 +66,10 @@ def reconstruct_expression(expression_30d):
     expression_30d = expression_30d * (cmvn["stddev_labels"]+minivalue_lab) \
              + cmvn["mean_labels"]
     # verse PCA
-    output_309d = verse_pca(expression_30d)
+    if do_pca_flag:
+        output_309d = verse_pca(expression_30d)
+    else:
+        output_309d = expression_30d
 
     # add line number
     length = len(output_309d)

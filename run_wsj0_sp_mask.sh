@@ -1,6 +1,6 @@
 #!/bin/bash
 
-stage=2
+stage=3
 config_dir=config/ # store list 'utt input1.ark:234 output1.ark:122
 output_dir=data/tfrecords
 num_layers=4
@@ -11,7 +11,7 @@ in_left_context=2
 in_right_context=2
 keep_prob=1
 apply_cmvn=1
-output_dim=30
+output_dim=309
 # inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
 # labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
 save_dir=exp_wsj0_sp_pit
