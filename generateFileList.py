@@ -37,7 +37,7 @@ def main(configFileName, start_index, end_index):
         curfile = list[i]
         # TODO: remove hard code
         uuid = curfile[0:5]
-        lab_file_path = '%s%s.csv'%(lab_files_dir, uuid)
+        lab_file_path = '%s%s_rotated.csv'%(lab_files_dir, uuid)
         #lab2_file_path = '%sN%s_expression.csv'%(lab2_files_dir, uuid)
         if not os.path.isfile(lab_file_path):
             print("file %s not exits!"%lab_file_path)

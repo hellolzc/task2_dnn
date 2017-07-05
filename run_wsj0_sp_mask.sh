@@ -1,7 +1,7 @@
 #!/bin/bash
 
-stage=3
-config_dir=config/ # store list 'utt input1.ark:234 output1.ark:122
+stage=0
+config_dir=config/
 output_dir=data/tfrecords
 num_layers=4
 num_units=256
@@ -12,34 +12,37 @@ in_right_context=2
 keep_prob=1
 apply_cmvn=1
 output_dim=309
-# inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
-# labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
+
 save_dir=exp_wsj0_sp_pit
 if [ ! -d $config_dir ]; then
   mkdir $config_dir
 fi
 
-# if [ $stage -le 0 ]; then
-#   echo "stage=$stage, conver the kaldi data to TFRecord."
+if [ $stage -le 0 ]; then
+  echo "stage=$stage, conver the csv data to TFRecord."
+  python generateFileList.py
+  shuf config.list  > config/all.txt
 
-#   inputs_cmvn=data/wsj0_separation/kaldi_feats/train_inputs/cmvn.ark
-#   labels_cmvn=data/wsj0_separation/kaldi_feats/train_labels/cmvn.ark #if you don't want to use cmvn for labels, please let it ''
-#   num_threads=20
-#   for mode in wsj0_sp_train wsj0_sp_dev wsj0_sp_test; do
-#     #./tools/make_lists.sh $mode data/logspec_enhan_7000/${mode}_input.scp data/logspec_enhan_7000/${mode}_label.scp  #generate the config/$mode.lst
+  cd config
+  head -110 all.txt > train.list
+  head -125 all.txt | tail -15 > val.list 
+  head -140 all.txt | tail -15 > test.list 
+  cd ..
 
-#     python ./tools/io_funcs/convert_to_records_parallel4wsj0_sp.py \
-#       --mode=$mode --inputs_cmvn=$inputs_cmvn --labels_cmvn=$labels_cmvn \
-#       --num_threads=$num_threads --apply_cmvn=$apply_cmvn --keep_prob=$keep_prob || exit 1
-#   done
-# fi
+  rm ./tfrecords/train/*
+  rm ./tfrecords/val/*
+  rm ./tfrecords/test/*
+  rm ./test_output/*
+  python convert_to_records.py
+fi
 
-# if [ $stage -le 1 ]; then
-#   echo "stage=$stage, generate the tfrecord file lists and store them in config/"
-#   for mode in wsj0_sp_test wsj0_sp_dev wsj0_sp_train; do
-#     find `pwd`/$output_dir/$mode/ -iname "*tfrecords" > $config_dir/${mode}_tf.lst
-#   done
-# fi
+if [ $stage -le 1 ]; then
+  echo "stage=$stage, generate the tfrecord file lists and store them"
+  find ./tfrecords/train/ -name '*.tfrecords' | shuf > ./tfrecords/train_tf.list
+  find ./tfrecords/val/ -name '*.tfrecords' | shuf > ./tfrecords/val_tf.list
+  find ./tfrecords/test/ -name '*.tfrecords' | shuf > ./tfrecords/test_tf.list
+fi
+
 if [ $stage -le 2 ]; then
   echo "state=$stage, begin training the model"
   learning_rate=0.0001
@@ -87,6 +90,7 @@ echo 'Training Done'
 
 #mode=wsj0_sp_test
 if [ $stage -le 3 ]; then
+  rm test_output/*
   load_model=`cat $save_dir/best.mdl`
   data_dir=`pwd`/test_output/ #`pwd`/data/wsj0_separation/test_pit/
   test_list=`pwd`/tfrecords/test_tf.list #config/${mode}_tf.lst
@@ -97,27 +101,26 @@ if [ $stage -le 3 ]; then
 
 fi
 
-# if [ $stage -le 4 ]; then
-#   . ./path.sh 
-#   data_dir=`pwd`/data/wsj0_separation/test_pit/  #same as the stage 3
-#   scp_list=config/wsj0_sp_test_scp.lst
-#   ori_wav_path=/home/disk1/snsun/Workspace/tensorflow/kaldi/data/wsj0_separation/ori_wav/wsj0_mixed_test/
-#   rec_wav_path=data/wsj0_separation/rec_wav_test/
-#   mkdir -p $rec_wav_path
-#   find $data_dir -iname "*.scp" > $scp_list
-#   for line in `cat $scp_list`; do
+if [ $stage -le 4 ]; then
+  # . ./path.sh 
+  # data_dir=`pwd`/data/wsj0_separation/test_pit/  #same as the stage 3
+  tmp_list=/dev/shm/test_output.list
+  # ori_wav_path=/home/disk1/snsun/Workspace/tensorflow/kaldi/data/wsj0_separation/ori_wav/wsj0_mixed_test/
+  # rec_wav_path=data/wsj0_separation/rec_wav_test/
+  output_data_dir=`pwd`/test_output
+  #mkdir -p $rec_wav_path
+  find $output_data_dir -iname "*.csv" | sort > $tmp_list
+  for line in `cat $tmp_list`; do
+    csvname=`basename -s .scp $line`
+    csvname=${csvname:0:5}
+    echo $csvname
+    `matlab -nosplash -nodesktop -r "gen_video_f2('$csvname');exit;"` # -nodisplay
+    tmp_file_name=/dev/shm/temp_0.avi
+    wav_file_name=../NewDataArranged/aligened_netural/output_wav/${csvname}_mono.wav
+    merged_result=./test_output/${csvname}_0_output.avi
+    echo $tmp_file_name '+' $wav_file_name '>' $merged_result
+    `ffmpeg -i $tmp_file_name -i $wav_file_name -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 $merged_result`
+  done
 
-#     wavname=`basename -s .scp $line`
-#     w=`echo $wavname | awk -F '_' 'BEGIN{OFS="_"}{print $1,$2}'` 
-#     w=${w}.wav
-#     if [ $apply_cmvn -eq 1 ];then
-#       apply-cmvn --norm-vars=true --reverse=true $inputs_cmvn scp:$line  ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
-#     else
-#       copy-feats scp:$line ark,scp:tmp_enhan.ark,tmp_enhan.scp || exit 1
-#     fi
-#     python   ./tools/reconstruct_spectrogram.py tmp_enhan.scp ${ori_wav_path}/$w ${rec_wav_path}/${wavname} || exit 1
-#   done
-
-# rm tmp_enhan.ark
+fi
 echo "Done OK!"
-#fi

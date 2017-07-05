@@ -6,9 +6,9 @@ while p <= numframes
     
       
  % Define anchor point
-    d = x(p,18);
-    e = y(p,18);
-    f = z(p,18);
+    d = x(p,48);
+    e = y(p,48);
+    f = z(p,48);
     
     x(p,:) = x(p,:)-d;
     y(p,:) = y(p,:)-e;

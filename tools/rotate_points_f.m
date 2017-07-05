@@ -6,13 +6,14 @@ while p <= numframes
     
       
  % Define anchor point
-    d = x(p,18);
-    e = y(p,18);
-    f = z(p,18);
+    d = x(p,48);%18
+    e = y(p,48);
+    f = z(p,48);
     
     x(p,:) = x(p,:)-d;
     y(p,:) = y(p,:)-e;
     z(p,:) = z(p,:)-f;
+    
     
 
     
@@ -26,14 +27,17 @@ while p <= numframes
 %     p2z = z(p,10);
 
     %Define anchor point2
-    d2 = x(p,48);%(p1x+p2x)/2;%
-    e2 = y(p,48);%(p1y+p2y)/2;%
-    f2 = z(p,48);%(p1z+p2z)/2;%
-
+    d2 = x(p,18);%(p1x+p2x)/2;%48
+    e2 = y(p,18);%(p1y+p2y)/2;%
+    f2 = z(p,18);%(p1z+p2z)/2;%
+    
+    
     % calculate angers
-    alpha = atan(d2/abs(f2));
-    beta = atan(sqrt(d2^2+f2^2)/abs(e2));
-    RotatedM = R_x(pi/6)*R_x(-beta)*R_y(-alpha)*[x(p,:);y(p,:);z(p,:)];%
+    %alpha = atan(d2/abs(f2));
+    %beta = atan(sqrt(d2^2+f2^2)/abs(e2));
+    gamma = atan(-f2/(-e2));
+    delta = atan(d2/sqrt(e2^2+f2^2));
+    RotatedM = R_x(pi/12)*R_z(-delta)*R_x(-gamma)*[x(p,:);y(p,:);z(p,:)];%R_x(pi/6)*R_x(-beta)*R_y(-alpha)*
     x(p,:) = RotatedM(1,:);
     y(p,:) = RotatedM(2,:);
     z(p,:) = RotatedM(3,:);
