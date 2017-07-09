@@ -20,7 +20,7 @@ import os
 
 def main(configFileName, start_index, end_index):
     #configFileName = FLAGS.config_dir_name
-    input_files_dir = "data/mfc2csv/"
+    input_files_dir = "data/output_mfc/"
     lab_files_dir = "data/output_csv/"
     # lab2_files_dir = "data/N_facial_expression/"
     f = open(configFileName,'w')

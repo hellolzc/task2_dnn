@@ -33,6 +33,7 @@ pca_global = PCA(n_components=30)
 is_fited = False
 
 def fit_pca(data):
+    global is_fited
     newData = pca_global.fit_transform(data)
     is_fited = True
     print("set n_components:", newData.shape[1])
@@ -162,6 +163,30 @@ def load_binary_file(file_name,dimension=501):
     features = features.reshape((-1, dimension))
     return features
 
+def read_mfcc_file(filename):
+    """Read data from HTK mfcc binary file.
+    文件的结构如下（按照字节顺序列出）： 
+        帧数：4字节（第0-第3字节） 
+        采样周期：4字节（第4-第7字节） 
+        每一帧的字节数：2字节（第8-第9字节） 
+        参数类型：2字节（第10-第11字节） 
+        数据：N字节（第12字节开始-文件结尾）
+    Returns:
+        A numpy matrix containing data of the given binary file.
+    """
+    read_buffer = open(filename, 'rb')
+
+    # big-endian
+    nf = struct.unpack('>i', read_buffer.read(4))[0]; # number of frames 
+    fp = struct.unpack('>i', read_buffer.read(4))[0]; # frame interval (unit: 100 ns)
+    by = struct.unpack('>h', read_buffer.read(2))[0]; # bytes per frame
+    tc = struct.unpack('>h', read_buffer.read(2))[0]; # type code
+    tmp_mat = np.frombuffer(read_buffer.read(by * nf), dtype='>f4')
+    mat = np.reshape(tmp_mat, (nf, by//4))
+
+    read_buffer.close()
+    return mat
+
 def load_csv_file(file_name):
     '''read data from csv return numpyarray'''
     my_matrix = np.loadtxt(file_name,delimiter=',',skiprows=0)
@@ -189,7 +214,8 @@ def load_a_sample(inputs_path, labels2_path, do_pca_flag=False):
      labels1: wav mfcc
      labels2: expression data
     '''
-    inputs = load_csv_file(inputs_path).astype(np.float64)
+    #inputs = load_csv_file(inputs_path).astype(np.float64)
+    inputs = read_mfcc_file(inputs_path).astype(np.float64)
     #inputs = inputs[0:-1:2]  # Downsized sample
     # concatenate two output
     #labels1 = load_csv_file(labels1_path).astype(np.float64)

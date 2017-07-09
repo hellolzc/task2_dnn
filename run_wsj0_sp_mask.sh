@@ -1,6 +1,6 @@
 #!/bin/bash
 
-stage=0
+stage=2
 config_dir=config/
 output_dir=data/tfrecords
 num_layers=4
@@ -77,7 +77,7 @@ if [ $stage -le 2 ]; then
       learning_rate=$(echo " $learning_rate * $halving_factor  "|bc -l)
       echo -e "change learning rate to $learning_rate\n"
     fi
-    rel_impr=$(bc <<< "scale=10; ($pre_cv_costs-$cur_cv_costs)/$pre_cv_costs")
+   # rel_impr=$(bc <<< "scale=10; ($pre_cv_costs-$cur_cv_costs)/$pre_cv_costs")
    # if [ $(echo "$rel_impr < $training_impr" | bc) = 1 ];then
    #   if [ $reject -gt 0 ];then
    #     break
