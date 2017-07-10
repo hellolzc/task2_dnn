@@ -1,7 +1,7 @@
 function  gen_video_f2(uuid)
 %gen_eideo_f  view effect of recovery by producing a video
 %   2017/6/26
-lib_path = './tools';
+lib_path = '/home/lzc/aslp/task2/DATA_PREPARE/csv_workspace/lib';
 addpath(lib_path);
 %warning off;
 

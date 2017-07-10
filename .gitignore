@@ -5,6 +5,7 @@
 
 .vscode/
 config/
+config.list
 data/
 tfrecords/
 exp/
