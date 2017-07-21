@@ -281,7 +281,7 @@ def convert_to(name, apply_cmvn=True,  apply_pca=False):
 
 def main(unused_argv):
     # Convert to Examples and write the result to TFRecords.
-    DO_PCA = False
+    DO_PCA = True
     if DO_PCA:
         apply_pca("train")
     calculate_cmvn("train", apply_pca=DO_PCA)    # use training data to calculate mean and var

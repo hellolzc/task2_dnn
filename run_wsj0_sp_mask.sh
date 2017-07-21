@@ -1,6 +1,6 @@
 #!/bin/bash
 
-stage=2
+stage=0
 config_dir=config/
 output_dir=data/tfrecords
 num_layers=4
@@ -11,7 +11,7 @@ in_left_context=2
 in_right_context=2
 keep_prob=1
 apply_cmvn=1
-output_dim=309
+output_dim=30
 
 save_dir=exp_wsj0_sp_pit
 if [ ! -d $config_dir ]; then
@@ -19,24 +19,26 @@ if [ ! -d $config_dir ]; then
 fi
 
 if [ $stage -le 0 ]; then
-  echo "stage=$stage, conver the csv data to TFRecord."
+  echo "stage=$stage, split data to 3 parts and generate file lists."
   python generateFileList.py
   shuf config.list  > config/all.txt
 
   cd config
-  head -110 all.txt > train.list
-  head -125 all.txt | tail -15 > val.list 
-  head -140 all.txt | tail -15 > test.list 
+  head -168 all.txt > train.list
+  head -173 all.txt | tail -15 > val.list 
+  head -198 all.txt | tail -15 > test.list 
   cd ..
 
-  rm ./tfrecords/train/*
-  rm ./tfrecords/val/*
-  rm ./tfrecords/test/*
-  rm ./test_output/*
-  python convert_to_records.py
 fi
 
 if [ $stage -le 1 ]; then
+  echo "stage=$stage, conver the csv data to TFRecord."
+  rm ./tfrecords/train/*
+  rm ./tfrecords/val/*
+  rm ./tfrecords/test/*
+
+  python convert_to_records.py
+
   echo "stage=$stage, generate the tfrecord file lists and store them"
   find ./tfrecords/train/ -name '*.tfrecords' | shuf > ./tfrecords/train_tf.list
   find ./tfrecords/val/ -name '*.tfrecords' | shuf > ./tfrecords/val_tf.list
@@ -116,7 +118,7 @@ if [ $stage -le 4 ]; then
     echo $csvname
     `matlab -nosplash -nodesktop -r "gen_video_f2('$csvname');exit;"` # -nodisplay
     tmp_file_name=/dev/shm/temp_0.avi
-    wav_file_name=../NewDataArranged/aligened_netural/output_wav/${csvname}_mono.wav
+    wav_file_name=../DATA_PREPARE/aligened_netural/output_wav/${csvname}_mono.wav
     merged_result=./test_output/${csvname}_0_output.avi
     echo $tmp_file_name '+' $wav_file_name '>' $merged_result
     `ffmpeg -i $tmp_file_name -i $wav_file_name -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 $merged_result`
