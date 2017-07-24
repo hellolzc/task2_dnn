@@ -1,6 +1,7 @@
 #!/bin/bash
 
-stage=0
+category_name=fear
+stage=4
 config_dir=config/
 output_dir=data/tfrecords
 num_layers=4
@@ -22,11 +23,14 @@ if [ $stage -le 0 ]; then
   echo "stage=$stage, split data to 3 parts and generate file lists."
   python generateFileList.py
   shuf config.list  > config/all.txt
+  all_set_num=`wc -l config.list | cut -f1 -d ' '`
 
   cd config
-  head -168 all.txt > train.list
-  head -173 all.txt | tail -15 > val.list 
-  head -198 all.txt | tail -15 > test.list 
+  cv_set_num=15
+  test_set_num=15
+  head -`expr $all_set_num - $cv_set_num - $test_set_num` all.txt > train.list
+  head -`expr $all_set_num - $test_set_num` all.txt | tail -$cv_set_num > val.list 
+  head -$all_set_num all.txt | tail -$test_set_num > test.list 
   cd ..
 
 fi
@@ -118,10 +122,10 @@ if [ $stage -le 4 ]; then
     echo $csvname
     `matlab -nosplash -nodesktop -r "gen_video_f2('$csvname');exit;"` # -nodisplay
     tmp_file_name=/dev/shm/temp_0.avi
-    wav_file_name=../DATA_PREPARE/aligened_netural/output_wav/${csvname}_mono.wav
+    wav_file_name=../DATA_PREPARE/aligened_$category_name/output_wav/${csvname}_mono.wav
     merged_result=./test_output/${csvname}_0_output.avi
     echo $tmp_file_name '+' $wav_file_name '>' $merged_result
-    `ffmpeg -i $tmp_file_name -i $wav_file_name -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 $merged_result`
+    `ffmpeg -i $tmp_file_name -i $wav_file_name -c:v copy -c:a copy -map 0:v:0 -map 1:a:0  -vcodec libx264 -crf 20 $merged_result `
   done
 
 fi
